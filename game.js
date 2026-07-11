@@ -21,6 +21,7 @@ const startButton = document.getElementById("startButton");
 const pauseBtn = document.getElementById("pauseBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const comboText = document.getElementById("combo");
+const levelText = document.getElementById("level");
 function resize() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
@@ -159,6 +160,7 @@ function update(dt) {
     if (score >= 8) maxPulses = 2;
 if (score >= 20) maxPulses = 3;
 if (score >= 40) maxPulses = 4;
+    levelText.textContent = maxPulses;
 
 if (nextPulse <= 0) {
 
