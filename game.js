@@ -79,6 +79,8 @@ function spawnPulse() {
 function startGame() {
     score = 0;
     lives = 3;
+    combo = 0;
+comboText.textContent = combo;
     pulses = [];
     running = true;
     nextPulse = 0.8;
@@ -174,13 +176,17 @@ function update(dt) {
             const targetNode = nodes[pulse.target];
 
             if (targetNode.active) {
-                score++;
-                scoreText.textContent = score;
+                combo++;
+score += combo;
+scoreText.textContent = score;
+comboText.textContent = combo;
 
                 targetNode.active = false;
                 targetNode.pulse = 1;
             } else {
                 lives--;
+                combo = 0;
+comboText.textContent = combo;
                 targetNode.pulse = 1;
 
                 if (lives <= 0) {
