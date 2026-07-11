@@ -3,6 +3,8 @@ const ctx = canvas.getContext("2d");
 
 let w, h;
 let running = false;
+let paused = false;
+let combo = 0;
 let score = 0;
 let lives = 3;
 let nodes = [];
@@ -15,7 +17,9 @@ const menu = document.getElementById("menu");
 const hud = document.getElementById("hud");
 const scoreText = document.getElementById("score");
 const startButton = document.getElementById("startButton");
-
+const pauseBtn = document.getElementById("pauseBtn");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+const comboText = document.getElementById("combo");
 function resize() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
@@ -106,7 +110,7 @@ canvas.addEventListener("pointerdown", event => {
     }
 });
 
-function update(dt) {
+if (paused) return;function update(dt) {
     for (const particle of particles) {
         particle.y -= particle.speed * dt;
 
@@ -289,6 +293,27 @@ function loop(time) {
     drawPulses();
     drawLives();
 
+    pauseBtn.onclick = () => {
+
+    paused = !paused;
+
+    pauseBtn.textContent = paused ? "▶" : "⏸";
+
+};
+
+fullscreenBtn.onclick = async () => {
+
+    if (!document.fullscreenElement) {
+
+        document.documentElement.requestFullscreen?.();
+
+    } else {
+
+        document.exitFullscreen?.();
+
+    }
+
+};
     requestAnimationFrame(loop);
 }
 
