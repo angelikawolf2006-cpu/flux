@@ -249,14 +249,43 @@ function drawNetwork() {
 
     ctx.beginPath();
     ctx.arc(cx, cy, 16, 0, Math.PI * 2);
-    ctx.fillStyle = "#8eeaff";
+    const colors=[
+"#8eeaff",
+"#7dffda",
+"#fff27b",
+"#ffb347",
+"#ff6b9c"
+];
+
+ctx.fillStyle=
+colors[
+Math.min(combo,4)
+];
     ctx.shadowBlur = 25;
     ctx.shadowColor = "#43d7ff";
     ctx.fill();
     ctx.shadowBlur = 0;
+    if(node.active){
+
+    ctx.beginPath();
+
+    ctx.arc(node.x,node.y,size+10,0,Math.PI*2);
+
+    ctx.strokeStyle="rgba(90,220,255,.45)";
+
+    ctx.lineWidth=3;
+
+    ctx.stroke();
+
+}
 
     for (const node of nodes) {
-        const size = 27 + node.pulse * 8;
+        const glow =
+    node.active
+        ? Math.sin(performance.now()/180)*5+5
+        : 0;
+
+const size = 27 + node.pulse * 8 + glow;
 
         ctx.beginPath();
         ctx.arc(node.x, node.y, size, 0, Math.PI * 2);
