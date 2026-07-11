@@ -275,19 +275,7 @@ Math.min(combo,4)
     ctx.shadowColor = "#43d7ff";
     ctx.fill();
     ctx.shadowBlur = 0;
-    if(node.active){
 
-    ctx.beginPath();
-
-    ctx.arc(node.x,node.y,size+10,0,Math.PI*2);
-
-    ctx.strokeStyle="rgba(90,220,255,.45)";
-
-    ctx.lineWidth=3;
-
-    ctx.stroke();
-
-}
 
     for (const node of nodes) {
         const glow =
@@ -308,6 +296,16 @@ const size = 27 + node.pulse * 8 + glow;
         ctx.shadowColor = "#43d7ff";
         ctx.fill();
         ctx.shadowBlur = 0;
+        if (node.active) {
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, size + 10, 0, Math.PI * 2);
+
+    ctx.strokeStyle = "rgba(90,220,255,.45)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+}
     }
 }
 
