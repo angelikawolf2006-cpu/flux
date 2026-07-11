@@ -93,6 +93,28 @@ function startGame() {
 
 startButton.addEventListener("click", startGame);
 
+    pauseBtn.onclick = () => {
+
+    paused = !paused;
+
+    pauseBtn.textContent = paused ? "▶" : "⏸";
+
+};
+
+fullscreenBtn.onclick = async () => {
+
+    if (!document.fullscreenElement) {
+
+        document.documentElement.requestFullscreen?.();
+
+    } else {
+
+        document.exitFullscreen?.();
+
+    }
+
+};
+
 canvas.addEventListener("pointerdown", event => {
     if (!running) return;
 
@@ -110,7 +132,9 @@ canvas.addEventListener("pointerdown", event => {
     }
 });
 
-if (paused) return;function update(dt) {
+function update(dt) {
+
+    if (paused) return;
     for (const particle of particles) {
         particle.y -= particle.speed * dt;
 
@@ -293,27 +317,7 @@ function loop(time) {
     drawPulses();
     drawLives();
 
-    pauseBtn.onclick = () => {
 
-    paused = !paused;
-
-    pauseBtn.textContent = paused ? "▶" : "⏸";
-
-};
-
-fullscreenBtn.onclick = async () => {
-
-    if (!document.fullscreenElement) {
-
-        document.documentElement.requestFullscreen?.();
-
-    } else {
-
-        document.exitFullscreen?.();
-
-    }
-
-};
     requestAnimationFrame(loop);
 }
 
