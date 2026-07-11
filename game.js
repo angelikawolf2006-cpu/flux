@@ -12,6 +12,7 @@ let pulses = [];
 let particles = [];
 let lastTime = 0;
 let nextPulse = 0;
+let maxPulses = 1;
 
 const menu = document.getElementById("menu");
 const hud = document.getElementById("hud");
@@ -78,6 +79,7 @@ function spawnPulse() {
 
 function startGame() {
     score = 0;
+    maxPulses = 1;
     lives = 3;
     combo = 0;
 comboText.textContent = combo;
@@ -154,16 +156,22 @@ function update(dt) {
 
     nextPulse -= dt;
 
-    if (nextPulse <= 0) {
+    if (score >= 8) maxPulses = 2;
+if (score >= 20) maxPulses = 3;
+if (score >= 40) maxPulses = 4;
+
+if (nextPulse <= 0) {
+
+    if (pulses.length < maxPulses) {
         spawnPulse();
-
-        const interval = Math.max(
-            0.65,
-            1.8 - score * 0.025
-        );
-
-        nextPulse = interval;
     }
+
+    nextPulse = Math.max(
+        0.45,
+        1.4 - score * 0.02
+    );
+
+}
 
     for (const pulse of pulses) {
         if (pulse.resolved) continue;
