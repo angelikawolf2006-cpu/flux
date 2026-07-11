@@ -2,172 +2,294 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 let w, h;
-
-function resize() {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-}
-
-window.addEventListener("resize", resize);
-resize();
+let running = false;
+let score = 0;
+let lives = 3;
+let nodes = [];
+let pulses = [];
+let particles = [];
+let lastTime = 0;
+let nextPulse = 0;
 
 const menu = document.getElementById("menu");
 const hud = document.getElementById("hud");
 const scoreText = document.getElementById("score");
 const startButton = document.getElementById("startButton");
 
-let running = false;
-let score = 0;
-
-const particles = [];
-
-for (let i = 0; i < 80; i++) {
-    particles.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        r: Math.random() * 2 + 1,
-        s: Math.random() * 0.5 + 0.2
-    });
+function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    createNodes();
 }
 
-const nodes = [];
+window.addEventListener("resize", resize);
 
 function createNodes() {
-    nodes.length = 0;
+    nodes = [];
 
-    const radius = Math.min(w, h) * 0.28;
+    const cx = w / 2;
+    const cy = h / 2;
+    const radius = Math.min(w, h) * 0.34;
 
-    for (let i = 0; i < 7; i++) {
-
-        const a = (Math.PI * 2 / 7) * i - Math.PI / 2;
+    for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
 
         nodes.push({
-            x: w / 2 + Math.cos(a) * radius,
-            y: h / 2 + Math.sin(a) * radius,
-            active: false
+            x: cx + Math.cos(angle) * radius,
+            y: cy + Math.sin(angle) * radius,
+            active: false,
+            pulse: 0
         });
     }
 }
 
-createNodes();
+function createParticles() {
+    particles = [];
 
-let current = 0;
-
-function chooseTarget() {
-
-    nodes.forEach(n => n.active = false);
-
-    current = Math.floor(Math.random() * nodes.length);
-
-    nodes[current].active = true;
-
+    for (let i = 0; i < 80; i++) {
+        particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: Math.random() * 1.8 + 0.4,
+            speed: Math.random() * 12 + 5
+        });
+    }
 }
 
-chooseTarget();
+resize();
+createParticles();
 
-canvas.addEventListener("pointerdown", e => {
+function spawnPulse() {
+    const target = Math.floor(Math.random() * nodes.length);
+
+    pulses.push({
+        x: w / 2,
+        y: h / 2,
+        target,
+        progress: 0,
+        speed: 0.16 + Math.min(score * 0.003, 0.18),
+        resolved: false
+    });
+}
+
+function startGame() {
+    score = 0;
+    lives = 3;
+    pulses = [];
+    running = true;
+    nextPulse = 0.8;
+
+    nodes.forEach(node => node.active = false);
+
+    scoreText.textContent = score;
+
+    menu.classList.add("hidden");
+    hud.classList.remove("hidden");
+}
+
+startButton.addEventListener("click", startGame);
+
+canvas.addEventListener("pointerdown", event => {
+    if (!running) return;
+
+    const x = event.clientX;
+    const y = event.clientY;
+
+    for (const node of nodes) {
+        const distance = Math.hypot(x - node.x, y - node.y);
+
+        if (distance < 48) {
+            node.active = !node.active;
+            node.pulse = 1;
+            break;
+        }
+    }
+});
+
+function update(dt) {
+    for (const particle of particles) {
+        particle.y -= particle.speed * dt;
+
+        if (particle.y < -5) {
+            particle.y = h + 5;
+            particle.x = Math.random() * w;
+        }
+    }
+
+    for (const node of nodes) {
+        node.pulse = Math.max(0, node.pulse - dt * 3);
+    }
 
     if (!running) return;
 
-    const x = e.clientX;
-    const y = e.clientY;
+    nextPulse -= dt;
 
-    nodes.forEach((n, i) => {
+    if (nextPulse <= 0) {
+        spawnPulse();
 
-        const d = Math.hypot(x - n.x, y - n.y);
+        const interval = Math.max(
+            0.65,
+            1.8 - score * 0.025
+        );
 
-        if (d < 35) {
+        nextPulse = interval;
+    }
 
-            if (i === current) {
+    for (const pulse of pulses) {
+        if (pulse.resolved) continue;
 
+        pulse.progress += pulse.speed * dt;
+
+        if (pulse.progress >= 1) {
+            pulse.resolved = true;
+
+            const targetNode = nodes[pulse.target];
+
+            if (targetNode.active) {
                 score++;
-
                 scoreText.textContent = score;
 
-                chooseTarget();
+                targetNode.active = false;
+                targetNode.pulse = 1;
+            } else {
+                lives--;
+                targetNode.pulse = 1;
 
+                if (lives <= 0) {
+                    endGame();
+                }
             }
-
         }
+    }
 
-    });
+    pulses = pulses.filter(
+        pulse => !pulse.resolved
+    );
+}
 
-});
+function endGame() {
+    running = false;
 
-startButton.onclick = () => {
+    setTimeout(() => {
+        menu.classList.remove("hidden");
+        hud.classList.add("hidden");
 
-    running = true;
+        const subtitle = menu.querySelector("p");
+        subtitle.textContent =
+            "Runde beendet · " + score + " Punkte";
 
-    menu.classList.add("hidden");
-
-    hud.classList.remove("hidden");
-
-};
+        startButton.textContent = "Nochmal spielen";
+    }, 500);
+}
 
 function drawBackground() {
-
     ctx.fillStyle = "#050914";
     ctx.fillRect(0, 0, w, h);
 
-    particles.forEach(p => {
-
+    for (const particle of particles) {
         ctx.beginPath();
-        ctx.fillStyle = "rgba(120,220,255,.5)";
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(120,220,255,.35)";
+        ctx.arc(
+            particle.x,
+            particle.y,
+            particle.r,
+            0,
+            Math.PI * 2
+        );
         ctx.fill();
-
-        p.y -= p.s;
-
-        if (p.y < -5) {
-            p.y = h + 5;
-            p.x = Math.random() * w;
-        }
-
-    });
-
+    }
 }
 
 function drawNetwork() {
+    const cx = w / 2;
+    const cy = h / 2;
 
-    ctx.strokeStyle = "rgba(100,180,255,.15)";
-
-    for (let i = 0; i < nodes.length; i++) {
-
-        for (let j = i + 1; j < nodes.length; j++) {
-
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.stroke();
-
-        }
-
+    for (const node of nodes) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(node.x, node.y);
+        ctx.strokeStyle = "rgba(80,180,255,.18)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
     }
 
-    nodes.forEach(n => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "#8eeaff";
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "#43d7ff";
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    for (const node of nodes) {
+        const size = 27 + node.pulse * 8;
 
         ctx.beginPath();
+        ctx.arc(node.x, node.y, size, 0, Math.PI * 2);
 
-        ctx.arc(n.x, n.y, 28, 0, Math.PI * 2);
-
-        ctx.fillStyle = n.active
+        ctx.fillStyle = node.active
             ? "#43d7ff"
             : "#16253d";
 
+        ctx.shadowBlur = node.active ? 25 : 5;
+        ctx.shadowColor = "#43d7ff";
         ctx.fill();
-
-    });
-
+        ctx.shadowBlur = 0;
+    }
 }
 
-function loop() {
+function drawPulses() {
+    const cx = w / 2;
+    const cy = h / 2;
 
+    for (const pulse of pulses) {
+        const target = nodes[pulse.target];
+
+        const x =
+            cx + (target.x - cx) * pulse.progress;
+
+        const y =
+            cy + (target.y - cy) * pulse.progress;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowBlur = 22;
+        ctx.shadowColor = "#7be7ff";
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+}
+
+function drawLives() {
+    if (!running) return;
+
+    ctx.font = "18px sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.fillText(
+        "◆ ".repeat(lives),
+        w - 20,
+        35
+    );
+}
+
+function loop(time) {
+    const dt = Math.min(
+        (time - lastTime) / 1000 || 0,
+        0.05
+    );
+
+    lastTime = time;
+
+    update(dt);
     drawBackground();
-
     drawNetwork();
+    drawPulses();
+    drawLives();
 
     requestAnimationFrame(loop);
-
 }
 
-loop();
+requestAnimationFrame(loop);
