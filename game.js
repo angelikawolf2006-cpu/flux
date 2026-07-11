@@ -296,6 +296,8 @@ const size = 27 + node.pulse * 8 + glow;
         ctx.shadowColor = "#43d7ff";
         ctx.fill();
         ctx.shadowBlur = 0;
+
+        }
         if (node.active) {
 
     ctx.beginPath();
@@ -306,8 +308,7 @@ const size = 27 + node.pulse * 8 + glow;
     ctx.stroke();
 
 }
-    }
-}
+    
 
 function drawPulses() {
     const cx = w / 2;
